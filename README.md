@@ -49,11 +49,81 @@ Call `parse(source)`, then `Interpreter::new(host).run(&program)`. The `Host` tr
 
 ## Command line
 
+Save a minimal program in `example.lse`:
+
 ```text
-cargo run --locked -- program.lse
+10 AFFICHER 42
+```
+
+Run it from this repository or after installing the command:
+
+```sh
+cargo run --locked -- example.lse
+potoo-lse example.lse
 ```
 
 The CLI reads a UTF-8 source file, takes `LIRE` data from standard input, writes `AFFICHER` output to standard output, pauses for Enter at `PAUSE`, and stores `GARER` records in files relative to the current working directory.
+
+### Build and install from source
+
+Install Rust 1.93 or later, then build and install the CLI from this repository:
+
+```sh
+cargo build --release --locked --bin potoo-lse
+cargo install --path . --locked --bin potoo-lse
+```
+
+Cargo installs the command in its configured binary directory, usually `~/.cargo/bin`. Ensure that directory is on `PATH`, then run `potoo-lse example.lse`.
+
+### Install a prebuilt release
+
+After a release is published, download `SHA256SUMS` and the archive for your platform from the [GitHub Releases page](https://github.com/diegopn/potoo-lse-interpreter/releases). The archive names are:
+
+- Linux x86_64 GNU: `potoo-lse-interpreter-<tag>-x86_64-unknown-linux-gnu.tar.gz`
+- Windows x86_64 MSVC: `potoo-lse-interpreter-<tag>-x86_64-pc-windows-msvc.zip`
+- Intel macOS: `potoo-lse-interpreter-<tag>-x86_64-apple-darwin.tar.gz`
+- Apple silicon macOS: `potoo-lse-interpreter-<tag>-aarch64-apple-darwin.tar.gz`
+
+Replace `<tag>` with the downloaded release tag and use the filename for your platform. The Linux build is made on Ubuntu 22.04 and may require a sufficiently recent glibc. On Linux or macOS, set `archive` to the exact downloaded filename and verify its matching checksum entry before extracting:
+
+```sh
+set -euo pipefail
+archive="potoo-lse-interpreter-<tag>-x86_64-unknown-linux-gnu.tar.gz"
+matches="$(awk -v archive="$archive" '$2 == archive { count++; line = $0 } END { if (count != 1) exit 1; print line }' SHA256SUMS)"
+if command -v sha256sum >/dev/null 2>&1; then
+  printf '%s\n' "$matches" | sha256sum --check -
+else
+  printf '%s\n' "$matches" | shasum -a 256 --check -
+fi
+mkdir -p "$HOME/.local/bin"
+tar -xzf "$archive"
+install -m 0755 "${archive%.tar.gz}/potoo-lse" "$HOME/.local/bin/potoo-lse"
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+For Intel or Apple silicon macOS, use the corresponding archive name above. Add the `PATH` line to `~/.profile` or your shell configuration to keep it for future sessions. On Windows PowerShell, use the Windows archive and verify the exact entry before extraction:
+
+```powershell
+$archive = "potoo-lse-interpreter-<tag>-x86_64-pc-windows-msvc.zip"
+$checksumEntries = @(Get-Content .\SHA256SUMS | Where-Object { $_ -match "^\w+\s+$([regex]::Escape($archive))$" })
+if ($checksumEntries.Count -ne 1) { throw "Expected one SHA256SUMS entry for $archive" }
+$expected = ($checksumEntries[0] -split '\s+')[0].ToLowerInvariant()
+$actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw "SHA-256 mismatch for $archive" }
+Expand-Archive -Path $archive -DestinationPath .
+$bundleDir = [IO.Path]::GetFileNameWithoutExtension($archive)
+$installDir = Join-Path $env:LOCALAPPDATA "Programs\potoo-lse"
+New-Item -ItemType Directory -Force $installDir | Out-Null
+Copy-Item (Join-Path $bundleDir "potoo-lse.exe") $installDir
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if (($userPath -split ';') -notcontains $installDir) {
+  $updatedPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $installDir } else { "$userPath;$installDir" }
+  [Environment]::SetEnvironmentVariable("Path", $updatedPath, "User")
+}
+$env:Path = "$installDir;$env:Path"
+```
+
+The Windows commands add the user-writable install directory to your user `PATH`; open a new terminal to use the command in future sessions.
 
 ## References
 
