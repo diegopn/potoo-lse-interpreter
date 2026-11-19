@@ -10,4 +10,4 @@ For other project concerns, see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_
 
 ## Current scope
 
-This repository contains only a minimal Rust crate scaffold. It does not parse or execute LSE source and has no language runtime or sandbox. This policy must be updated before source execution is introduced.
+This crate parses and executes the documented LSE profile. It does not sandbox programs. The command-line runner can read procedure source files and read, write, or delete record files at paths supplied by the program. It also uses host-provided input, output, date/time, randomness, and pause services. Do not run untrusted source from a working directory where it can access sensitive files. Execution limits do not bound all resource use or host behavior.

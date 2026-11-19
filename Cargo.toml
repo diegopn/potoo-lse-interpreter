@@ -7,8 +7,12 @@ license = "GPL-3.0-or-later"
 repository = "https://github.com/diegopn/potoo-lse-interpreter"
 homepage = "https://diegopn.github.io/potoo-site/manual/lse/"
 readme = "README.md"
-description = "An evaluation scaffold for a Rust implementation of the historical LSE teaching language."
+description = "An evidence-backed Rust interpreter for documented historical LSE syntax."
 
 [lib]
 name = "potoo_lse_interpreter"
 path = "src/lib.rs"
+
+[[bin]]
+name = "potoo-lse"
+path = "src/bin/potoo-lse.rs"
